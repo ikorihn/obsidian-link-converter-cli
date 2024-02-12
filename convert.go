@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -56,20 +55,19 @@ func (c *Converter) convertLine(line string) string {
 			if strings.HasPrefix(destination, "http") {
 				continue
 			}
-			fileName := filepath.Base(destination)
-			fileName = strings.ReplaceAll(fileName, ".md", "")
-			if fileName == title {
-				if files, ok := c.filemap[fileName]; ok && len(files) >= 2 {
-					file := strings.TrimPrefix(destination, "./")
-					file = strings.TrimSuffix(file, ".md")
-					line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, file, title), 1)
+
+			filename := filenameWithoutMdExtension(destination)
+
+			if filename == title {
+				if files, ok := c.filemap[filename]; ok && len(files) >= 2 {
+					relativePath := formatRelativePath(destination)
+					line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, relativePath, title), 1)
 				} else {
 					line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s]]`, title), 1)
 				}
 			} else {
-				file := strings.TrimPrefix(destination, "./")
-				file = strings.TrimSuffix(file, ".md")
-				line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, file, title), 1)
+				relativePath := formatRelativePath(destination)
+				line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, relativePath, title), 1)
 			}
 		}
 	}

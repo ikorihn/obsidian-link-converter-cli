@@ -1,25 +1,18 @@
 package main
 
 import (
-	"os"
+	"flag"
 
 	"github.com/ikorihn/olconv"
 )
 
 func main() {
-	f, err := os.OpenFile("test.md", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+	var basepath string
+	flag.StringVar(&basepath, "basepath", ".", "specify target directory")
+	flag.Parse()
 
-	wf, err := os.Create("after.md")
-	if err != nil {
+	if err := olconv.ConvertUnderDir(basepath); err != nil {
 		panic(err)
 	}
-	defer wf.Close()
 
-	if err := olconv.Convert(f, wf); err != nil {
-		panic(err)
-	}
 }
