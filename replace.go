@@ -1,40 +1,17 @@
-package main
+package olconv
 
 import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/text"
 )
-
-func main() {
-	f, err := os.Open("test.md")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	wf, err := os.Create("after.md")
-	if err != nil {
-		panic(err)
-	}
-	defer wf.Close()
-
-	if err := run(f, wf); err != nil {
-		panic(err)
-	}
-}
 
 var mdLinkRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^\)]+)\)`)
 
-func run(r io.Reader, w io.Writer) error {
+func Convert(r io.Reader, w io.Writer) error {
 
 	sc := bufio.NewScanner(r)
 	bw := bufio.NewWriter(w)
@@ -43,8 +20,19 @@ func run(r io.Reader, w io.Writer) error {
 	// 同一ファイル名のときに判別するため、map[string][]string にする
 	// codeblockは無視する
 
+	inCodeBlock := false
 	for sc.Scan() {
 		line := sc.Text()
+
+		if strings.HasPrefix(line, "```") {
+			inCodeBlock = !inCodeBlock
+		}
+		if inCodeBlock {
+			bw.WriteString(line)
+			bw.WriteString("\n")
+			continue
+		}
+
 		matches := mdLinkRegex.FindAllStringSubmatch(line, -1)
 		if len(matches) > 0 {
 			for i, matche := range matches {
@@ -70,33 +58,4 @@ func run(r io.Reader, w io.Writer) error {
 	bw.Flush()
 
 	return nil
-}
-
-func runMd() error {
-	source, err := os.ReadFile("test.md")
-	if err != nil {
-		return err
-	}
-
-	gm := goldmark.New()
-	n := gm.Parser().Parse(text.NewReader(source))
-	n.Dump(source, 2)
-
-	err = ast.Walk(n, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-
-		switch kind := n.(type) {
-		case *ast.FencedCodeBlock, *ast.CodeSpan, *ast.CodeBlock:
-			return ast.WalkContinue, nil
-		case *ast.Link:
-			if strings.HasPrefix(string(kind.Destination), "http") {
-				return ast.WalkSkipChildren, nil
-			}
-			fmt.Printf("Link: [%s](%s)\n", string(kind.Title), string(kind.Destination))
-			return ast.WalkSkipChildren, nil
-		}
-
-		return ast.WalkContinue, nil
-	})
-
-	return err
 }

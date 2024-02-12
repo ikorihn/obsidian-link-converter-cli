@@ -1,4 +1,4 @@
-module github.com/ikorihn/obsidian-link-converter-cli
+module github.com/ikorihn/olconv
 
 go 1.22.0
 
