@@ -43,7 +43,7 @@ https://github.com/ikorihn
 			"hoge":     {"./hoge.tar.md"},
 		},
 	)
-	err := c.Convert(r, w)
+	err := c.Convert(r, w, true)
 	if err != nil {
 		t.Errorf("Convert() error = %v", err)
 		return
@@ -78,5 +78,47 @@ https://github.com/ikorihn
 
 	if gotW := w.String(); gotW != want {
 		t.Errorf("Convert() = %v, want %v", gotW, want)
+	}
+}
+
+func TestConverter_convertLine(t *testing.T) {
+	type fields struct {
+		inCodeBlock bool
+		filemap     map[string][]string
+	}
+	type args struct {
+		line string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+
+		{
+			name: "",
+			fields: fields{
+				filemap: map[string][]string{
+					"circuit breaker pattern": {"note/circuit breaker pattern.md"},
+				},
+			},
+			args: args{
+				line: `[circuit breaker](note/circuit%20breaker%20pattern.md) を実装する`,
+			},
+			want: "[[circuit breaker pattern|circuit breaker]] を実装する",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Converter{
+				inCodeBlock: tt.fields.inCodeBlock,
+				filemap:     tt.fields.filemap,
+			}
+			if got := c.convertLine(tt.args.line); got != tt.want {
+				t.Errorf("Converter.convertLine() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

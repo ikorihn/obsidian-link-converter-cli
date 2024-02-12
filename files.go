@@ -2,11 +2,10 @@ package olconv
 
 import (
 	"bytes"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/sync/errgroup"
 )
 
 func ConvertUnderDir(basepath string) error {
@@ -18,34 +17,36 @@ func ConvertUnderDir(basepath string) error {
 	filemap := FileListToMap(files)
 	c := NewConverter(filemap)
 
-	var eg errgroup.Group
 	for _, file := range files {
-		eg.Go(func() error {
-			f, err := os.Open(file)
-			if err != nil {
-				panic(err)
-			}
+		newLineAtEnd := false
+		content, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		if len(content) == 0 {
+			continue
+		}
+		if content[len(content)-1] == '\n' {
+			newLineAtEnd = true
+		}
 
-			buf := &bytes.Buffer{}
-			if err := c.Convert(f, buf); err != nil {
-				panic(err)
-			}
-			f.Close()
+		f, err := os.Open(file)
+		if err != nil {
+			return err
+		}
 
-			wf, err := os.OpenFile(file, os.O_WRONLY|os.O_TRUNC, 0644)
-			if err != nil {
-				panic(err)
-			}
-			wf.WriteString(buf.String())
+		buf := &bytes.Buffer{}
+		if err := c.Convert(f, buf, newLineAtEnd); err != nil {
+			return err
+		}
+		f.Close()
 
-			wf.Close()
-
-			return nil
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return err
+		wf, err := os.OpenFile(file, os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		wf.WriteString(buf.String())
+		wf.Close()
 	}
 
 	return nil
@@ -97,10 +98,13 @@ func FileListToMap(filelist []string) map[string][]string {
 func filenameWithoutMdExtension(fullpath string) string {
 	filename := filepath.Base(fullpath)
 	filename = strings.ReplaceAll(filename, ".md", "")
+	filename, _ = url.QueryUnescape(filename)
+
 	return filename
 }
 func formatRelativePath(relativePath string) string {
 	relativePath = strings.TrimPrefix(relativePath, "./")
 	relativePath = strings.TrimSuffix(relativePath, ".md")
+	relativePath, _ = url.QueryUnescape(relativePath)
 	return relativePath
 }
