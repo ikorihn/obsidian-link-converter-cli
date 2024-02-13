@@ -43,6 +43,7 @@ func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
 	if newLineAtEnd {
 		bw.WriteString("\n")
 	}
+	c.inCodeBlock = false
 	bw.Flush()
 
 	return nil
@@ -61,6 +62,8 @@ func (c *Converter) convertLine(line string) string {
 	}
 
 	p.parse(line)
+
+	// start from last index to avoid index misalignment due to re-slicing
 	for i := len(p.mdLinks) - 1; i >= 0; i-- {
 		mdLink := p.mdLinks[i]
 		title, destination := mdLink.title, mdLink.destination
@@ -128,6 +131,7 @@ func (p *Parser) parse(input string) {
 
 		} else if c == ']' && !p.inCodeSpan && p.inMdLinkTitle && !p.inMdLinkDestination {
 			if i+1 < len(input) && input[i+1] == '(' {
+				// only if next char is "("
 				titleEndPos = i
 				skipNext = true
 				p.inMdLinkDestination = true
