@@ -78,8 +78,12 @@ func (c *Converter) convertLine(line string) string {
 				line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s]]`, title) + line[mdLink.destinationEndPos+1:]
 			}
 		} else {
-			relativePath := formatRelativePath(destination)
-			line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s|%s]]`, relativePath, title) + line[mdLink.destinationEndPos+1:]
+			if files, ok := c.filemap[filename]; ok && len(files) == 1 {
+				line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s|%s]]`, filename, title) + line[mdLink.destinationEndPos+1:]
+			} else {
+				relativePath := formatRelativePath(destination)
+				line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s|%s]]`, relativePath, title) + line[mdLink.destinationEndPos+1:]
+			}
 		}
 
 	}
