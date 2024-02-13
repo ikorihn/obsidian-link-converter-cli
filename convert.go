@@ -56,28 +56,109 @@ func (c *Converter) convertLine(line string) string {
 		return line
 	}
 
-	matches := mdLinkRegex.FindAllStringSubmatch(line, -1)
-	if len(matches) > 0 {
-		for _, matche := range matches {
-			title, destination := matche[1], matche[2]
-			if strings.HasPrefix(destination, "http") {
-				continue
-			}
+	p := Parser{
+		mdLinks: []mdLink{},
+	}
 
-			filename := filenameWithoutMdExtension(destination)
+	p.parse(line)
+	for i := len(p.mdLinks) - 1; i >= 0; i-- {
+		mdLink := p.mdLinks[i]
+		title, destination := mdLink.title, mdLink.destination
+		if strings.HasPrefix(destination, "http") {
+			continue
+		}
 
-			if filename == title {
-				if files, ok := c.filemap[filename]; ok && len(files) >= 2 {
-					relativePath := formatRelativePath(destination)
-					line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, relativePath, title), 1)
-				} else {
-					line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s]]`, title), 1)
-				}
-			} else {
+		filename := filenameWithoutMdExtension(destination)
+
+		if filename == title {
+			if files, ok := c.filemap[filename]; ok && len(files) >= 2 {
 				relativePath := formatRelativePath(destination)
-				line = strings.Replace(line, fmt.Sprintf(`[%s](%s)`, title, destination), fmt.Sprintf(`[[%s|%s]]`, relativePath, title), 1)
+				line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s|%s]]`, relativePath, title) + line[mdLink.destinationEndPos+1:]
+			} else {
+				line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s]]`, title) + line[mdLink.destinationEndPos+1:]
 			}
+		} else {
+			relativePath := formatRelativePath(destination)
+			line = line[:mdLink.titleStartPos] + fmt.Sprintf(`[[%s|%s]]`, relativePath, title) + line[mdLink.destinationEndPos+1:]
+		}
+
+	}
+
+	return line
+}
+
+type Parser struct {
+	inCodeSpan          bool
+	inMdLinkTitle       bool
+	inMdLinkDestination bool
+
+	mdLinks []mdLink
+}
+
+type mdLink struct {
+	title               string
+	destination         string
+	titleStartPos       int
+	titleEndPos         int
+	destinationStartPos int
+	destinationEndPos   int
+}
+
+func (p *Parser) parse(input string) {
+	var mdLinkTitle, mdLinkDestination string
+	var titleStartPos, titleEndPos, destinationStartPos, destinationEndPos int
+
+	for i := 0; i < len(input); i++ {
+		c := input[i]
+		if c == '[' && !p.inCodeSpan && !p.inMdLinkTitle && !p.inMdLinkDestination {
+			p.inMdLinkTitle = true
+			titleStartPos = i
+			mdLinkTitle = ""
+
+		} else if c == ']' && !p.inCodeSpan && p.inMdLinkTitle && !p.inMdLinkDestination {
+			if i < len(input) && input[i+1] == '(' {
+				titleEndPos = i
+				i++
+				p.inMdLinkDestination = true
+				destinationStartPos = i
+				mdLinkDestination = ""
+			}
+
+			p.inMdLinkTitle = false
+
+		} else if c == ')' && !p.inCodeSpan && !p.inMdLinkTitle && p.inMdLinkDestination {
+
+			p.inMdLinkDestination = false
+			destinationEndPos = i
+
+			p.mdLinks = append(p.mdLinks, mdLink{
+				title:               mdLinkTitle,
+				destination:         mdLinkDestination,
+				titleStartPos:       titleStartPos,
+				titleEndPos:         titleEndPos,
+				destinationStartPos: destinationStartPos,
+				destinationEndPos:   destinationEndPos,
+			})
+
+		} else if c == '`' {
+
+			if p.inMdLinkTitle {
+				mdLinkTitle += string(c)
+			} else if p.inMdLinkDestination {
+				mdLinkDestination += string(c)
+			} else {
+				p.inCodeSpan = !p.inCodeSpan
+			}
+
+		} else {
+
+			if p.inMdLinkTitle {
+				mdLinkTitle += string(c)
+			} else if p.inMdLinkDestination {
+				mdLinkDestination += string(c)
+			}
+
 		}
 	}
-	return line
+
 }

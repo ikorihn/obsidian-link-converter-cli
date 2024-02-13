@@ -122,3 +122,12 @@ func TestConverter_convertLine(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_readChar(t *testing.T) {
+	l := Parser{
+		mdLinks: []mdLink{},
+	}
+	l.parse("[circuit breaker](note/circuit%20breaker%20pattern.md) を実装する`")
+
+	t.Logf("%#v\n", l)
+}
