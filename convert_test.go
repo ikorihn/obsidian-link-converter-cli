@@ -24,13 +24,20 @@ https://github.com/ikorihn
 - [this is note](./Note.md)
 
 [Note](./Note.md) is not [the link](http://example.com)
+[Note](./Note.md) and [Second Note](./Second%20Note.md)
 
 [paren in (link)](./Paren.md)
+
+[only bracket]
+(only paren)
+[not link] (only paren)
 
 [hoge](./hoge.tar.md)
 [samename](./sub1/samename.md)
 [samename](./sub2/samename.md)
+[日本語](./日本語.md)
 ` +
+			"in `[code span](./codespan.md)`\n" +
 			"```\n" +
 			"[in codeblock](./codeblock.md)\n" +
 			"```\n")
@@ -65,13 +72,20 @@ https://github.com/ikorihn
 - [[Note|this is note]]
 
 [[Note]] is not [the link](http://example.com)
+[[Note]] and [[Second Note]]
 
 [[Paren|paren in (link)]]
+
+[only bracket]
+(only paren)
+[not link] (only paren)
 
 [[hoge.tar|hoge]]
 [[sub1/samename|samename]]
 [[sub2/samename|samename]]
+[[日本語]]
 ` +
+		"in `[code span](./codespan.md)`\n" +
 		"```\n" +
 		"[in codeblock](./codeblock.md)\n" +
 		"```\n"
