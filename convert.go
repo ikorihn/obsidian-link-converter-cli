@@ -112,17 +112,24 @@ func (p *Parser) parse(input string) {
 	var mdLinkTitle, mdLinkDestination string
 	var titleStartPos, titleEndPos, destinationStartPos, destinationEndPos int
 
-	for i := 0; i < len(input); i++ {
-		c := input[i]
+	var skipNext bool
+
+	for i, c := range input {
+		// XXX ugly code ...
+		if skipNext {
+			skipNext = false
+			continue
+		}
+
 		if c == '[' && !p.inCodeSpan && !p.inMdLinkTitle && !p.inMdLinkDestination {
 			p.inMdLinkTitle = true
 			titleStartPos = i
 			mdLinkTitle = ""
 
 		} else if c == ']' && !p.inCodeSpan && p.inMdLinkTitle && !p.inMdLinkDestination {
-			if i < len(input) && input[i+1] == '(' {
+			if i+1 < len(input) && input[i+1] == '(' {
 				titleEndPos = i
-				i++
+				skipNext = true
 				p.inMdLinkDestination = true
 				destinationStartPos = i
 				mdLinkDestination = ""
