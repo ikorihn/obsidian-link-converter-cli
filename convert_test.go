@@ -38,9 +38,10 @@ https://github.com/ikorihn
 [日本語](./日本語.md)
 ` +
 			"in `[code span](./codespan.md)`\n" +
-			"```\n" +
+			"```go\n" +
 			"[in codeblock](./codeblock.md)\n" +
-			"```\n")
+			"```\n" +
+			"in `[code span](./codespan.md)`\n")
 
 	w := &bytes.Buffer{}
 
@@ -86,9 +87,10 @@ https://github.com/ikorihn
 [[日本語]]
 ` +
 		"in `[code span](./codespan.md)`\n" +
-		"```\n" +
+		"```go\n" +
 		"[in codeblock](./codeblock.md)\n" +
-		"```\n"
+		"```\n" +
+		"in `[code span](./codespan.md)`\n"
 
 	if gotW := w.String(); gotW != want {
 		t.Errorf("Convert() = %v, want %v", gotW, want)

@@ -27,20 +27,11 @@ func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
 	sc := bufio.NewScanner(r)
 	bw := bufio.NewWriter(w)
 
-	first := true
 	for sc.Scan() {
 		line := sc.Text()
 
 		line = c.convertLine(line)
-		if !first {
-			bw.WriteString("\n")
-		}
 		bw.WriteString(line)
-		if first {
-			first = false
-		}
-	}
-	if newLineAtEnd {
 		bw.WriteString("\n")
 	}
 	c.inCodeBlock = false
