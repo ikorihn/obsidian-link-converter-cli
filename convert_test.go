@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConvert(t *testing.T) {
@@ -92,9 +94,7 @@ https://github.com/ikorihn
 		"```\n" +
 		"in `[code span](./codespan.md)`\n"
 
-	if gotW := w.String(); gotW != want {
-		t.Errorf("Convert() = %v, want %v", gotW, want)
-	}
+	assert.Equal(t, strings.Split(want, "\n"), strings.Split(w.String(), "\n"))
 }
 
 func TestConverter_convertLine(t *testing.T) {
