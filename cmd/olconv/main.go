@@ -2,25 +2,38 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 
 	"github.com/ikorihn/olconv"
 )
 
 func main() {
 	var basepath string
-	var reverse bool
+	var toWiki bool
+	var toMarkdown bool
+
 	flag.StringVar(&basepath, "basepath", ".", "specify target directory")
-	flag.BoolVar(&reverse, "reverse", false, "convert Wikilinks to Markdown links (default: Markdown links to Wikilinks)")
+	flag.BoolVar(&toWiki, "to-wiki", false, "convert Markdown links to Wikilinks")
+	flag.BoolVar(&toMarkdown, "to-markdown", false, "convert Wikilinks to Markdown links")
 	flag.Parse()
 
+	// どちらも指定されていない、または両方指定されている場合
+	if (!toWiki && !toMarkdown) || (toWiki && toMarkdown) {
+		fmt.Fprintf(os.Stderr, "Error: Please specify either --to-wiki or --to-markdown\n\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	var err error
-	if reverse {
-		err = olconv.ReverseConvertUnderDir(basepath)
-	} else {
+	if toWiki {
 		err = olconv.ConvertUnderDir(basepath)
+	} else {
+		err = olconv.ReverseConvertUnderDir(basepath)
 	}
 
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
