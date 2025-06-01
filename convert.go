@@ -79,6 +79,68 @@ func (c *Converter) convertLine(line string) string {
 	return line
 }
 
+// ReverseConverter converts Wikilinks to Markdown links
+type ReverseConverter struct {
+	inCodeBlock bool
+	filemap     map[string][]string
+}
+
+func NewReverseConverter(filemap map[string][]string) *ReverseConverter {
+	return &ReverseConverter{
+		filemap: filemap,
+	}
+}
+
+func (rc *ReverseConverter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
+	sc := bufio.NewScanner(r)
+	bw := bufio.NewWriter(w)
+
+	for sc.Scan() {
+		line := sc.Text()
+		line = rc.convertLine(line)
+		bw.WriteString(line)
+		bw.WriteString("\n")
+	}
+	rc.inCodeBlock = false
+	bw.Flush()
+
+	return nil
+}
+
+func (rc *ReverseConverter) convertLine(line string) string {
+	if strings.HasPrefix(line, "```") {
+		rc.inCodeBlock = !rc.inCodeBlock
+	}
+	if rc.inCodeBlock {
+		return line
+	}
+
+	wp := WikilinkParser{
+		wikilinks: []wikilink{},
+	}
+
+	wp.parse(line)
+
+	// start from last index to avoid index misalignment due to re-slicing
+	for i := len(wp.wikilinks) - 1; i >= 0; i-- {
+		wlink := wp.wikilinks[i]
+
+		var mdLink string
+		if wlink.title != "" {
+			// [[destination|title]] -> [title](destination.md)
+			mdLink = fmt.Sprintf(`[%s](%s.md)`, wlink.title, wlink.destination)
+		} else {
+			// [[destination]] -> [destination](destination.md)
+			filename := extractFilename(wlink.destination)
+			mdLink = fmt.Sprintf(`[%s](%s.md)`, filename, wlink.destination)
+		}
+
+		line = line[:wlink.startPos] + mdLink + line[wlink.endPos+1:]
+	}
+
+	return line
+}
+
 type Parser struct {
 	inCodeSpan bool
 	mdLinks    []mdLink
@@ -139,4 +201,73 @@ func (p *Parser) parse(input string) {
 			continue
 		}
 	}
+}
+
+// WikilinkParser parses WikiLinks in text
+type WikilinkParser struct {
+	inCodeSpan bool
+	wikilinks  []wikilink
+}
+
+type wikilink struct {
+	destination string
+	title       string
+	startPos    int
+	endPos      int
+}
+
+func (wp *WikilinkParser) parse(input string) {
+	var currentWikilink *wikilink
+	i := 0
+
+	for i < len(input) {
+		switch input[i] {
+		case '`':
+			wp.inCodeSpan = !wp.inCodeSpan
+		case '[':
+			if wp.inCodeSpan {
+				i++
+				continue
+			}
+			// Check for [[
+			if i+1 < len(input) && input[i+1] == '[' {
+				currentWikilink = &wikilink{
+					startPos: i,
+				}
+				i += 2 // Skip [[
+				continue
+			}
+		case ']':
+			if wp.inCodeSpan || currentWikilink == nil {
+				i++
+				continue
+			}
+			// Check for ]]
+			if i+1 < len(input) && input[i+1] == ']' {
+				// Extract content between [[ and ]]
+				content := input[currentWikilink.startPos+2 : i]
+				currentWikilink.endPos = i + 1
+
+				// Parse content: check for | separator
+				if pipeIndex := strings.Index(content, "|"); pipeIndex != -1 {
+					currentWikilink.destination = strings.TrimSpace(content[:pipeIndex])
+					currentWikilink.title = strings.TrimSpace(content[pipeIndex+1:])
+				} else {
+					currentWikilink.destination = strings.TrimSpace(content)
+				}
+
+				wp.wikilinks = append(wp.wikilinks, *currentWikilink)
+				currentWikilink = nil
+				i += 2 // Skip ]]
+				continue
+			}
+		}
+		i++
+	}
+}
+
+// extractFilename extracts the filename from a path
+func extractFilename(path string) string {
+	parts := strings.Split(path, "/")
+	return parts[len(parts)-1]
 }

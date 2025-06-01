@@ -53,6 +53,49 @@ func ConvertUnderDir(basepath string) error {
 
 }
 
+func ReverseConvertUnderDir(basepath string) error {
+	files, err := ListMdFiles(basepath)
+	if err != nil {
+		return err
+	}
+	filemap := FileListToMap(files)
+	rc := NewReverseConverter(filemap)
+
+	for _, file := range files {
+		newLineAtEnd := false
+		content, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		if len(content) == 0 {
+			continue
+		}
+		if content[len(content)-1] == '\n' {
+			newLineAtEnd = true
+		}
+
+		f, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+
+		buf := &bytes.Buffer{}
+		if err := rc.Convert(f, buf, newLineAtEnd); err != nil {
+			return err
+		}
+		f.Close()
+
+		wf, err := os.OpenFile(file, os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		wf.WriteString(buf.String())
+		wf.Close()
+	}
+
+	return nil
+}
+
 func ListMdFiles(basepath string) ([]string, error) {
 	filelist := make([]string, 0)
 
