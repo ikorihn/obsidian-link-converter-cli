@@ -36,7 +36,7 @@ func ConvertUnderDir(basepath string) error {
 		}
 
 		buf := &bytes.Buffer{}
-		if err := c.Convert(f, buf, newLineAtEnd); err != nil {
+		if err := c.Convert(f, buf, newLineAtEnd, ToWikilink); err != nil {
 			return err
 		}
 		f.Close()
@@ -59,7 +59,7 @@ func ReverseConvertUnderDir(basepath string) error {
 		return err
 	}
 	filemap := FileListToMap(files)
-	rc := NewReverseConverter(filemap)
+	c := NewConverter(filemap)
 
 	for _, file := range files {
 		newLineAtEnd := false
@@ -80,7 +80,7 @@ func ReverseConvertUnderDir(basepath string) error {
 		}
 
 		buf := &bytes.Buffer{}
-		if err := rc.Convert(f, buf, newLineAtEnd); err != nil {
+		if err := c.Convert(f, buf, newLineAtEnd, ToMarkdown); err != nil {
 			return err
 		}
 		f.Close()

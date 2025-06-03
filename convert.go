@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type LinkDirection int
+
+const (
+	ToWikilink LinkDirection = iota
+	ToMarkdown
+)
+
 type Converter struct {
 	inCodeBlock bool
 	filemap     map[string][]string
@@ -18,14 +25,14 @@ func NewConverter(filemap map[string][]string) *Converter {
 	}
 }
 
-func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
+func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool, direction LinkDirection) error {
 	sc := bufio.NewScanner(r)
 	bw := bufio.NewWriter(w)
 
 	lines := make([]string, 0)
 	for sc.Scan() {
 		line := sc.Text()
-		line = c.convertLine(line)
+		line = c.convertLine(line, direction)
 		lines = append(lines, line)
 	}
 	bw.WriteString(strings.Join(lines, "\n"))
@@ -39,7 +46,7 @@ func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
 	return nil
 }
 
-func (c *Converter) convertLine(line string) string {
+func (c *Converter) convertLine(line string, direction LinkDirection) string {
 	if strings.HasPrefix(line, "```") {
 		c.inCodeBlock = !c.inCodeBlock
 	}
@@ -47,6 +54,17 @@ func (c *Converter) convertLine(line string) string {
 		return line
 	}
 
+	switch direction {
+	case ToWikilink:
+		return c.convertMdToWikilink(line)
+	case ToMarkdown:
+		return c.convertWikilinkToMd(line)
+	default:
+		return line
+	}
+}
+
+func (c *Converter) convertMdToWikilink(line string) string {
 	p := Parser{
 		mdLinks: []mdLink{},
 	}
@@ -84,47 +102,7 @@ func (c *Converter) convertLine(line string) string {
 	return line
 }
 
-// ReverseConverter converts Wikilinks to Markdown links
-type ReverseConverter struct {
-	inCodeBlock bool
-	filemap     map[string][]string
-}
-
-func NewReverseConverter(filemap map[string][]string) *ReverseConverter {
-	return &ReverseConverter{
-		filemap: filemap,
-	}
-}
-
-func (rc *ReverseConverter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
-	sc := bufio.NewScanner(r)
-	bw := bufio.NewWriter(w)
-
-	lines := make([]string, 0)
-	for sc.Scan() {
-		line := sc.Text()
-		line = rc.convertLine(line)
-		lines = append(lines, line)
-	}
-	bw.WriteString(strings.Join(lines, "\n"))
-	if newLineAtEnd {
-		bw.WriteString("\n")
-	}
-
-	rc.inCodeBlock = false
-	bw.Flush()
-
-	return nil
-}
-
-func (rc *ReverseConverter) convertLine(line string) string {
-	if strings.HasPrefix(line, "```") {
-		rc.inCodeBlock = !rc.inCodeBlock
-	}
-	if rc.inCodeBlock {
-		return line
-	}
-
+func (c *Converter) convertWikilinkToMd(line string) string {
 	wp := WikilinkParser{
 		wikilinks: []wikilink{},
 	}
@@ -150,6 +128,7 @@ func (rc *ReverseConverter) convertLine(line string) string {
 
 	return line
 }
+
 
 type Parser struct {
 	inCodeSpan bool

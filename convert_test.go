@@ -53,7 +53,7 @@ https://github.com/ikorihn
 			"hoge":     {"./hoge.tar.md"},
 		},
 	)
-	err := c.Convert(r, w, true)
+	err := c.Convert(r, w, true, ToWikilink)
 	if err != nil {
 		t.Errorf("Convert() error = %v", err)
 		return
@@ -132,7 +132,7 @@ func TestConverter_convertLine(t *testing.T) {
 				inCodeBlock: tt.fields.inCodeBlock,
 				filemap:     tt.fields.filemap,
 			}
-			if got := c.convertLine(tt.args.line); got != tt.want {
+			if got := c.convertLine(tt.args.line, ToWikilink); got != tt.want {
 				t.Errorf("Converter.convertLine() = %v, want %v", got, tt.want)
 			}
 		})
@@ -187,13 +187,13 @@ https://github.com/ikorihn
 
 	w := &bytes.Buffer{}
 
-	rc := NewReverseConverter(
+	c := NewConverter(
 		map[string][]string{
 			"samename": {"./sub1/samename.md", "./sub2/samename.md"},
 			"hoge":     {"./hoge.tar.md"},
 		},
 	)
-	err := rc.Convert(r, w, true)
+	err := c.Convert(r, w, true, ToMarkdown)
 	if err != nil {
 		t.Errorf("ReverseConvert() error = %v", err)
 		return
@@ -304,12 +304,12 @@ func TestReverseConverter_convertLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rc := &ReverseConverter{
+			c := &Converter{
 				inCodeBlock: tt.fields.inCodeBlock,
 				filemap:     tt.fields.filemap,
 			}
-			if got := rc.convertLine(tt.args.line); got != tt.want {
-				t.Errorf("ReverseConverter.convertLine() = %v, want %v", got, tt.want)
+			if got := c.convertLine(tt.args.line, ToMarkdown); got != tt.want {
+				t.Errorf("Converter.convertLine() = %v, want %v", got, tt.want)
 			}
 		})
 	}
