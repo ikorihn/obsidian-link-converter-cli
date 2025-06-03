@@ -22,12 +22,17 @@ func (c *Converter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool) error {
 	sc := bufio.NewScanner(r)
 	bw := bufio.NewWriter(w)
 
+	lines := make([]string, 0)
 	for sc.Scan() {
 		line := sc.Text()
 		line = c.convertLine(line)
-		bw.WriteString(line)
+		lines = append(lines, line)
+	}
+	bw.WriteString(strings.Join(lines, "\n"))
+	if newLineAtEnd {
 		bw.WriteString("\n")
 	}
+
 	c.inCodeBlock = false
 	bw.Flush()
 
@@ -95,12 +100,17 @@ func (rc *ReverseConverter) Convert(r io.Reader, w io.Writer, newLineAtEnd bool)
 	sc := bufio.NewScanner(r)
 	bw := bufio.NewWriter(w)
 
+	lines := make([]string, 0)
 	for sc.Scan() {
 		line := sc.Text()
 		line = rc.convertLine(line)
-		bw.WriteString(line)
+		lines = append(lines, line)
+	}
+	bw.WriteString(strings.Join(lines, "\n"))
+	if newLineAtEnd {
 		bw.WriteString("\n")
 	}
+
 	rc.inCodeBlock = false
 	bw.Flush()
 
