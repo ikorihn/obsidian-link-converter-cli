@@ -3,35 +3,68 @@
 ![alt text](https://img.shields.io/badge/cli-blue)
 ![alt text](https://img.shields.io/badge/Go-00ADD8?logo=go)
 
-**Obsidian Link Converter CLI** is a command-line tool that converts `Markdown Link` within an Obsidian vault to `WikiLinks` link format.
+**Obsidian Link Converter CLI** is a command-line tool that converts `Markdown Link` within an Obsidian vault to `Wikilink` link format and vice versa.
 
-### Features
+## Features
 
-This CLI tool converts Markdown links within your Obsidian vault to WikiLinks format.
+This CLI tool converts Markdown links within your Obsidian vault to Wikilink format.
 
-- Converts `[Example](note.md)` to `[[note]]`
-- Converts `[Title](./note.md)` to `[[note|Title]]`
-- Converts `[Example](subfolder/note.md)` to `[[subfolder/note]]`
-- automatically detect same file name in different folder, so convert `[foo](./sub1/foo.md)` and `[foo](./sub2/foo.md)` to `[[sub1/foo|foo]]` and `[[sub2/foo|foo]]`
-- Removes `.md` from the link target.
-- Handles links containing spaces and special characters.
-- Handles codeblock. Links in codeblock will not convert.
-- Handles code span. Links in code span will not convert.
-- Handles external links. External links will not convert.
-- Removes `/` at the first of the link path.
-- Removes `.md` at the end of the link path.
-- Converts to shortest path possible. for example if you have `./sub1/foo.md`, `./sub2/foo.md` and `./foo.md`, when you add `[foo](./foo.md)` in your note, it will convert to `[[foo]]`.
+### Conversion Examples
 
-### Usage
+| Description              | Markdown link                                  | Wikilink                                 |
+| ------------------------ | ---------------------------------------------- | ---------------------------------------- |
+| Basic conversion         | `[note](note.md)`                              | `[[note]]`                               |
+| Link with title          | `[Title](note.md)`                             | `[[note\|Title]]`                        |
+| File in subfolder        | `[note](subfolder/note.md)`                    | `[[subfolder/note\|note]]`               |
+| Same filename detection  | `[foo](./sub1/foo.md)`, `[foo](./sub2/foo.md)` | `[[sub1/foo\|foo]]`, `[[sub2/foo\|foo]]` |
+| Shortest path conversion | `[foo](./path/to/subdir/foo.md)`               | `[[foo]]`                                |
+
+### Additional Features
+
+- Does not convert links in code blocks
+- Does not convert links in code spans
+- Does not convert external links
+- Converts to shortest path possible
+
+## Note
+
+- When converting links, please be aware that the shortest path conversion may result in path information loss during multiple conversions. For example:
+`[foo](./path/to/subdir/foo.md)` -- `-to-wiki` --> `[[foo]]` -- `-to-markdown` --> `[foo](foo.md)`
+
+- It's recommended to create a backup of your Obsidian vault before using this tool.
+- Verify that the converted Markdown files work correctly.
+
+
+## Installation
 
 ```shell
-# Convert links in the current directory
-❯ olconv
+❯ go install github.com/ikorihn/obsidian-link-converter-cli/cmd/olconv@latest
+```
+
+## Usage
+
+```shell
+# Convert Markdown links to Wikilink in the current directory
+❯ olconv -to-wiki
+
+# Convert Wikilink to Markdown links in the current directory
+❯ olconv -to-markdown
+
 # Convert links in a specific directory
-❯ olconv -basepath path/to/your/vault
+❯ olconv -basepath path/to/your/vault -to-wiki
+❯ olconv -basepath path/to/your/vault -to-markdown
+
 # Show help
 ❯ olconv -h
 ```
+
+### Command Line Options
+
+- `-to-wiki`: Convert Markdown links `[title](path.md)` to Wikilink `[[path|title]]`
+- `-to-markdown`: Convert Wikilink `[[path|title]]` to Markdown links `[title](path.md)`
+- `-basepath <path>`: Specify target directory (default: current directory)
+
+**Note**: You must specify either `-to-wiki` or `-to-markdown` (but not both).
 
 Input
 
@@ -45,21 +78,6 @@ Output
 ```
 - [[note|This is Link]]
 - [[subfolder/note|This is Link]]
-```
-
-### Background
-
-The reason for creating this tool was the significant time it took to process link conversion using plugins. Therefore, by writing this CLI in Go, link conversion can now be completed almost instantly.
-
-### Notes
-
-- It's recommended to create a backup of your Obsidian vault before using this tool.
-- Verify that the converted Markdown files work correctly.
-
-### Installation
-
-```shell
-❯ go install github.com/ikorihn/obsidian-link-converter-cli/cmd/olconv@latest
 ```
 
 ### License
