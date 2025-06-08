@@ -18,7 +18,7 @@ func TestConvertUnderDir_Integration(t *testing.T) {
 	copyTestVault(t, "testdata/sample_vault", tempDir)
 
 	// Run conversion
-	err := ConvertUnderDir(tempDir)
+	err := LinkToWikilink(tempDir)
 	require.NoError(t, err)
 
 	// Verify index.md conversion
@@ -62,7 +62,7 @@ func TestReverseConvertUnderDir_Integration(t *testing.T) {
 	copyTestVault(t, "testdata/sample_vault", tempDir)
 
 	// Run reverse conversion on wikilinks file
-	err := ReverseConvertUnderDir(tempDir)
+	err := WikilinkToLink(tempDir)
 	require.NoError(t, err)
 
 	// Verify wikilinks.md conversion
@@ -124,11 +124,11 @@ func TestRoundTripConversion_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Convert markdown links to wikilinks
-	err = ConvertUnderDir(tempDir)
+	err = LinkToWikilink(tempDir)
 	require.NoError(t, err)
 
 	// Convert wikilinks back to markdown links
-	err = ReverseConvertUnderDir(tempDir)
+	err = WikilinkToLink(tempDir)
 	require.NoError(t, err)
 
 	// Read final content
@@ -156,7 +156,7 @@ func TestEdgeCases_Integration(t *testing.T) {
 	copyTestVault(t, "testdata/sample_vault", tempDir)
 
 	// Run conversion
-	err := ConvertUnderDir(tempDir)
+	err := LinkToWikilink(tempDir)
 	require.NoError(t, err)
 
 	// Verify edge_cases.md conversion
@@ -188,7 +188,7 @@ func TestJapaneseFiles_Integration(t *testing.T) {
 	copyTestVault(t, "testdata/sample_vault", tempDir)
 
 	// Run conversion
-	err := ConvertUnderDir(tempDir)
+	err := LinkToWikilink(tempDir)
 	require.NoError(t, err)
 
 	// Verify Japanese file conversion
@@ -211,7 +211,7 @@ func TestEmptyFiles_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Run conversion (should not crash on empty files)
-	err = ConvertUnderDir(tempDir)
+	err = LinkToWikilink(tempDir)
 	require.NoError(t, err)
 
 	// File should still be empty

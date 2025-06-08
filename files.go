@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func ConvertUnderDir(basepath string) error {
+func LinkToWikilink(basepath string) error {
 
 	files, err := ListMdFiles(basepath)
 	if err != nil {
@@ -53,7 +53,7 @@ func ConvertUnderDir(basepath string) error {
 
 }
 
-func ReverseConvertUnderDir(basepath string) error {
+func WikilinkToLink(basepath string) error {
 	files, err := ListMdFiles(basepath)
 	if err != nil {
 		return err

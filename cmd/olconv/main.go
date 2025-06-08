@@ -27,9 +27,9 @@ func main() {
 
 	var err error
 	if toWiki {
-		err = olconv.ConvertUnderDir(basepath)
+		err = olconv.LinkToWikilink(basepath)
 	} else {
-		err = olconv.ReverseConvertUnderDir(basepath)
+		err = olconv.WikilinkToLink(basepath)
 	}
 
 	if err != nil {

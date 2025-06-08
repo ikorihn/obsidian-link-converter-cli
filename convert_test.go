@@ -116,13 +116,13 @@ func TestConverter_convertLine(t *testing.T) {
 			name: "",
 			fields: fields{
 				filemap: map[string][]string{
-					"circuit breaker pattern": {"note/circuit breaker pattern.md"},
+					"note with spaces": {"note/note with spaces.md"},
 				},
 			},
 			args: args{
-				line: `[circuit breaker](note/circuit%20breaker%20pattern.md) を実装する`,
+				line: `[note title](note/note%20with%20spaces.md) を実装する`,
 			},
-			want: "[[circuit breaker pattern|circuit breaker]] を実装する",
+			want: "[[note with spaces|note title]] を実装する",
 		},
 	}
 
@@ -143,7 +143,7 @@ func TestParser_readChar(t *testing.T) {
 	l := Parser{
 		mdLinks: []mdLink{},
 	}
-	l.parse("[circuit breaker](note/circuit%20breaker%20pattern.md) を実装する`")
+	l.parse("[note title](note/note%20with%20spaces.md) を実装する`")
 
 	t.Logf("%#v\n", l)
 }
@@ -267,13 +267,13 @@ func TestReverseConverter_convertLine(t *testing.T) {
 			name: "wikilink with title",
 			fields: fields{
 				filemap: map[string][]string{
-					"circuit breaker pattern": {"note/circuit breaker pattern.md"},
+					"note with spaces": {"note/note with spaces.md"},
 				},
 			},
 			args: args{
-				line: `[[circuit breaker pattern|circuit breaker]] を実装する`,
+				line: `[[note with spaces|note title]] を実装する`,
 			},
-			want: "[circuit breaker](circuit breaker pattern.md) を実装する",
+			want: "[note title](note with spaces.md) を実装する",
 		},
 		{
 			name: "wikilink with path",
@@ -319,13 +319,13 @@ func TestWikilinkParser_parse(t *testing.T) {
 	wp := WikilinkParser{
 		wikilinks: []wikilink{},
 	}
-	wp.parse("[[circuit breaker pattern|circuit breaker]] を実装する")
+	wp.parse("[[note with spaces|note title]] を実装する")
 
 	assert.Len(t, wp.wikilinks, 1)
-	assert.Equal(t, "circuit breaker pattern", wp.wikilinks[0].destination)
-	assert.Equal(t, "circuit breaker", wp.wikilinks[0].title)
+	assert.Equal(t, "note with spaces", wp.wikilinks[0].destination)
+	assert.Equal(t, "note title", wp.wikilinks[0].title)
 	assert.Equal(t, 0, wp.wikilinks[0].startPos)
-	assert.Equal(t, 42, wp.wikilinks[0].endPos)
+	assert.Equal(t, 30, wp.wikilinks[0].endPos)
 }
 
 func TestExtractFilename(t *testing.T) {
