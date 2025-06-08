@@ -38,7 +38,7 @@ This CLI tool converts Markdown links within your Obsidian vault to Wikilink for
 ## Installation
 
 ```shell
-❯ go install github.com/ikorihn/obsidian-link-converter-cli/cmd/olconv@latest
+❯ go install github.com/ikorihn/olconv/cmd/olconv@latest
 ```
 
 ## Usage
